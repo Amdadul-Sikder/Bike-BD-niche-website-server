@@ -24,6 +24,17 @@ async function run() {
         const database = client.db('bike_bd');
         // const productsCollection = database.collection('products');
         const orderCollection = database.collection('orders');
+        const productsCollection = database.collection('products');
+        const reviewCollection = database.collection('review');
+
+
+        // get products
+
+        app.get('/products', async (req, res) => {
+            const cursor = productsCollection.find({});
+            const products = await cursor.toArray();
+            res.json(products);
+        })
 
         // post order
 
@@ -35,6 +46,30 @@ async function run() {
 
         })
 
+
+
+
+        // post review
+
+        app.post('/review', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            console.log(result);
+            res.json(result)
+
+        })
+
+        // get review
+
+        app.get('/review', async (req, res) => {
+            const cursor = reviewCollection.find({});
+            const review = await cursor.toArray();
+            res.json(review);
+        })
+
+
+
+
         // get orders
 
         app.get('/orders', async (req, res) => {
@@ -43,6 +78,15 @@ async function run() {
             const cursor = orderCollection.find(query);
             const orders = await cursor.toArray();
             res.json(orders);
+        })
+
+        // delete orders
+
+        app.delete('/deleteOrder/:id', async (req, res) => {
+            const ObjectId = require('mongodb').ObjectID;
+            const result = await orderCollection.deleteOne({ _id: ObjectId(req.params.id) });
+            res.json(result);
+            // console.log(result);
         })
 
 
