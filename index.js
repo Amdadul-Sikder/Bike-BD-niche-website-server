@@ -11,9 +11,47 @@ app.use(cors());
 app.use(express.json());
 
 // connect database
-const uri = "mongodb+srv://DB_USER:DB_PASS@cluster0.nocvj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nocvj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-console.log(uri);
+// console.log(uri);
+
+async function run() {
+    try {
+        await client.connect();
+        console.log("database connected succesfully");
+
+        //============ database collection ==========//
+        const database = client.db('bike_bd');
+        // const productsCollection = database.collection('products');
+        const orderCollection = database.collection('orders');
+
+        // post order
+
+        app.post('/orders', async (req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            console.log(result);
+            res.json(result)
+
+        })
+
+        // get orders
+
+        app.get('/orders', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const cursor = orderCollection.find(query);
+            const orders = await cursor.toArray();
+            res.json(orders);
+        })
+
+
+    }
+    finally {
+        // await client.close(); 
+    }
+}
+run().catch(console.dir)
 
 
 app.get('/', (req, res) => {
