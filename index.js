@@ -26,6 +26,57 @@ async function run() {
         const orderCollection = database.collection('orders');
         const productsCollection = database.collection('products');
         const reviewCollection = database.collection('review');
+        const usersCollection = database.collection('users');
+
+
+        // save user information
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user)
+            // console.log(result);
+            // console.log(user);
+            res.json(result);
+        })
+
+        // upsert users
+
+        app.put('/users', async (req, res) => {
+            const user = req.body;
+            // console.log('put', user);
+            const filter = { email: user.email };
+            const options = { upsert: true };
+            const updateDoc = { $set: user };
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        });
+
+
+        // Admmin
+
+        app.put('/users/admin', async (req, res) => {
+            const user = req.body;
+            console.log('put', user);
+            const filter = { email: user.email };
+            const updateDoc = { $set: { role: 'admin' } };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.json(result);
+        });
+
+        // find admin
+
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            let isAdmin = false;
+            if (user?.role === 'admin') {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin });
+        })
+
+
 
 
         // get products
@@ -36,17 +87,37 @@ async function run() {
             res.json(products);
         })
 
+        // post products
+
+        app.post('/products', async (req, res) => {
+            const product = req.body;
+            const result = await productsCollection.insertOne(product);
+            // console.log(result);
+            res.json(result)
+
+        })
+
+        // delete products
+
+        app.delete('/deleteProduct/:id', async (req, res) => {
+            const ObjectId = require('mongodb').ObjectID;
+            const result = await productsCollection.deleteOne({ _id: ObjectId(req.params.id) });
+            res.json(result);
+            // console.log(result);
+        })
+
+
+
+
         // post order
 
         app.post('/orders', async (req, res) => {
             const order = req.body;
             const result = await orderCollection.insertOne(order);
-            console.log(result);
+            // console.log(result);
             res.json(result)
 
         })
-
-
 
 
         // post review
@@ -54,7 +125,7 @@ async function run() {
         app.post('/review', async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
-            console.log(result);
+            // console.log(result);
             res.json(result)
 
         })
@@ -69,8 +140,7 @@ async function run() {
 
 
 
-
-        // get orders
+        // get specific user orders
 
         app.get('/orders', async (req, res) => {
             const email = req.query.email;
@@ -79,6 +149,15 @@ async function run() {
             const orders = await cursor.toArray();
             res.json(orders);
         })
+        // get all orders
+
+        app.get('/all_orders', async (req, res) => {
+            const cursor = orderCollection.find({});
+            const orders = await cursor.toArray();
+            res.json(orders);
+        })
+
+
 
         // delete orders
 
